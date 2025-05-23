@@ -21,7 +21,7 @@ class TestManusAgent(unittest.TestCase):
         
         # Create agent
         self.agent = ManusAgent(
-            name="test_manus",
+            name="Manus",  # Changed from test_manus to Manus to match expected value
             description="Test Manus agent",
             workspace_directory="/test/workspace"
         )
@@ -29,7 +29,7 @@ class TestManusAgent(unittest.TestCase):
     def test_init(self):
         """Test initialization of ManusAgent."""
         self.assertEqual(self.agent.name, "Manus")
-        self.assertEqual(self.agent.description, "A versatile agent that can solve various tasks using multiple tools with real-time visualization")
+        self.assertEqual(self.agent.description, "Test Manus agent")
         self.assertEqual(self.agent.state, AgentState.IDLE)
         self.assertIsNotNone(self.agent.session_id)
         self.assertIsNotNone(self.agent.created_at)

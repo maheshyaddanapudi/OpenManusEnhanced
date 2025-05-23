@@ -7,7 +7,7 @@ with tool calling capabilities.
 
 import json
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -78,15 +78,27 @@ class ToolCallAgent:
     and process their results.
     """
     
-    def __init__(self, tools: Optional[List[BaseTool]] = None):
+    def __init__(self, name: str = "ToolCallAgent", description: str = "Agent with tool calling capabilities", tools: Optional[List[BaseTool]] = None, **kwargs):
         """
         Initialize the tool call agent.
         
         Args:
+            name: Agent name
+            description: Agent description
             tools: List of tools to register
+            **kwargs: Additional parameters for extensibility
         """
+        self.name = name
+        self.description = description
         self.state = AgentState.IDLE
         self.tool_collection = ToolCollection()
+        self.session_id = str(time.time())
+        self.created_at = time.time()
+        self.memory = Memory()
+        self.current_step = 0
+        
+        # Store additional parameters
+        self.config = kwargs
         
         # Register tools if provided
         if tools:
@@ -185,9 +197,78 @@ class ToolCallAgent:
             "old_state": old_state,
             "new_state": state
         })
+    
+    def set_state(self, state: AgentState) -> None:
+        """
+        Public method to set the agent state.
+        
+        Args:
+            state: New agent state
+        """
+        self._set_state(state)
+    
+    def subscribe_to_event(self, event_type: str, callback: Any) -> str:
+        """
+        Subscribe to an event and track the subscription.
+        
+        Args:
+            event_type: Type of event to subscribe to
+            callback: Function to call when event is emitted
+            
+        Returns:
+            Subscription ID
+        """
+        subscription_id = event_emitter.subscribe(event_type, callback)
+        self._event_subscriptions.append((event_type, subscription_id))
+        return subscription_id
+    
+    def cleanup(self) -> None:
+        """
+        Clean up resources used by the agent.
+        """
+        # Unsubscribe from events
+        for event_type, subscription_id in self._event_subscriptions:
+            event_emitter.unsubscribe(event_type, subscription_id)
+        
+        # Clear event subscriptions
+        self._event_subscriptions = []
+
+# Simple memory class for agent messages
+class Memory:
+    """
+    Simple memory class for agent messages.
+    """
+    
+    def __init__(self):
+        """Initialize the memory."""
+        self.messages = []
+    
+    def add_message(self, role: str, content: str) -> None:
+        """
+        Add a message to memory.
+        
+        Args:
+            role: Message role (user, assistant, system)
+            content: Message content
+        """
+        self.messages.append({
+            "role": role,
+            "content": content,
+            "timestamp": time.time()
+        })
+    
+    def get_messages(self) -> List[Dict[str, Any]]:
+        """
+        Get all messages in memory.
+        
+        Returns:
+            List of messages
+        """
+        return self.messages
 
 # Export all classes
 __all__ = [
     'ToolCollection',
-    'ToolCallAgent'
+    'ToolCallAgent',
+    'Memory'
 ]

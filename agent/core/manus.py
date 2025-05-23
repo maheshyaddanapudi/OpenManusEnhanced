@@ -22,8 +22,6 @@ class ManusAgent(ToolCallAgent):
     A versatile general-purpose agent with support for both local tools
     and enhanced visualization capabilities.
     """
-    name: str = "Manus"
-    description: str = "A versatile agent that can solve various tasks using multiple tools with real-time visualization"
     
     # Default system prompt template
     system_prompt: str = """You are Manus, a versatile AI assistant designed to help with a wide range of tasks.
@@ -43,46 +41,43 @@ If you've completed the task, use the Terminate tool to finish.
     max_observe: int = 10000
     max_steps: int = 20
     
-    # Browser context for web interactions
-    browser_context: Optional[Dict[str, Any]] = None
-    
-    # Connected remote servers
-    connected_servers: Dict[str, str] = Field(default_factory=dict)
-    
-    def __init__(self, workspace_directory: str = "/home/ubuntu/workspace", **data):
+    def __init__(self, workspace_directory: str = "/home/ubuntu/workspace", name: str = "Manus", 
+                 description: str = "A versatile agent that can solve various tasks using multiple tools with real-time visualization", 
+                 **data):
         """
         Initialize the Manus agent with workspace directory and other parameters.
         
         Args:
             workspace_directory: Path to the agent's workspace directory
+            name: Agent name
+            description: Agent description
             **data: Additional parameters for the agent
         """
         # Format system prompt with workspace directory
         if "system_prompt" not in data:
             data["system_prompt"] = self.system_prompt.format(directory=workspace_directory)
         
-        super().__init__(**data)
+        # Initialize browser context
+        self.browser_context = {
+            "current_url": None,
+            "history": [],
+            "cookies": {},
+            "local_storage": {}
+        }
         
-        # Initialize browser context if needed
-        if self.browser_context is None:
-            self.browser_context = {
-                "current_url": None,
-                "history": [],
-                "cookies": {},
-                "local_storage": {}
-            }
+        # Initialize connected servers
+        self.connected_servers = {}
+        
+        # Call parent constructor
+        super().__init__(name=name, description=description, **data)
         
         # Register additional event handlers
         self._register_manus_event_handlers()
     
     def _register_manus_event_handlers(self):
         """Register Manus-specific event handlers"""
-        self._event_subscriptions.append(
-            event_emitter.subscribe("browser:navigation", self._on_browser_navigation)
-        )
-        self._event_subscriptions.append(
-            event_emitter.subscribe("human:interaction", self._on_human_interaction)
-        )
+        self.subscribe_to_event("browser:navigation", self._on_browser_navigation)
+        self.subscribe_to_event("human:interaction", self._on_human_interaction)
     
     def _on_browser_navigation(self, event_data):
         """Handle browser navigation events"""
@@ -181,6 +176,18 @@ If you've completed the task, use the Terminate tool to finish.
         finally:
             # Restore previous state
             self.set_state(old_state)
+    
+    def take_human_control(self):
+        """Handle human takeover of control"""
+        # This is a placeholder - in a real implementation, this would
+        # implement the human takeover logic
+        pass
+    
+    def release_human_control(self):
+        """Handle human release of control"""
+        # This is a placeholder - in a real implementation, this would
+        # implement the human control release logic
+        pass
     
     def cleanup(self) -> None:
         """

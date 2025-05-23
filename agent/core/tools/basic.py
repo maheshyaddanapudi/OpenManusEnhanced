@@ -13,8 +13,13 @@ class TerminateTool(BaseTool):
     """
     Tool for terminating the agent execution.
     """
-    name: str = "terminate"
-    description: str = "Terminate the agent execution when the task is complete."
+    
+    def __init__(self):
+        """Initialize the terminate tool."""
+        super().__init__(
+            name="terminate",
+            description="Terminate the agent execution when the task is complete."
+        )
     
     def execute(self, reason: str = "Task completed") -> Dict[str, Any]:
         """
@@ -40,8 +45,13 @@ class AskHumanTool(BaseTool):
     """
     Tool for asking the human for input.
     """
-    name: str = "ask_human"
-    description: str = "Ask the human for input when you need additional information."
+    
+    def __init__(self):
+        """Initialize the ask human tool."""
+        super().__init__(
+            name="ask_human",
+            description="Ask the human for input when you need additional information."
+        )
     
     def execute(self, question: str) -> Dict[str, Any]:
         """
@@ -73,8 +83,13 @@ class FileReadTool(BaseTool):
     """
     Tool for reading files.
     """
-    name: str = "file_read"
-    description: str = "Read the contents of a file."
+    
+    def __init__(self):
+        """Initialize the file read tool."""
+        super().__init__(
+            name="file_read",
+            description="Read the contents of a file."
+        )
     
     def execute(self, file_path: str, start_line: Optional[int] = None, end_line: Optional[int] = None) -> Dict[str, Any]:
         """
@@ -125,8 +140,13 @@ class FileWriteTool(BaseTool):
     """
     Tool for writing to files.
     """
-    name: str = "file_write"
-    description: str = "Write content to a file."
+    
+    def __init__(self):
+        """Initialize the file write tool."""
+        super().__init__(
+            name="file_write",
+            description="Write content to a file."
+        )
     
     def execute(self, file_path: str, content: str, append: bool = False) -> Dict[str, Any]:
         """
@@ -180,8 +200,13 @@ class ShellExecuteTool(BaseTool):
     """
     Tool for executing shell commands.
     """
-    name: str = "shell_execute"
-    description: str = "Execute a shell command."
+    
+    def __init__(self):
+        """Initialize the shell execute tool."""
+        super().__init__(
+            name="shell_execute",
+            description="Execute a shell command."
+        )
     
     def execute(self, command: str, working_dir: str = "/home/ubuntu") -> Dict[str, Any]:
         """
@@ -232,8 +257,13 @@ class BrowserNavigateTool(BaseTool):
     """
     Tool for navigating to a URL in the browser.
     """
-    name: str = "browser_navigate"
-    description: str = "Navigate to a URL in the browser."
+    
+    def __init__(self):
+        """Initialize the browser navigate tool."""
+        super().__init__(
+            name="browser_navigate",
+            description="Navigate to a URL in the browser."
+        )
     
     def execute(self, url: str) -> Dict[str, Any]:
         """
@@ -281,8 +311,13 @@ class BrowserClickTool(BaseTool):
     """
     Tool for clicking elements in the browser.
     """
-    name: str = "browser_click"
-    description: str = "Click an element in the browser."
+    
+    def __init__(self):
+        """Initialize the browser click tool."""
+        super().__init__(
+            name="browser_click",
+            description="Click an element in the browser."
+        )
     
     def execute(self, selector: str) -> Dict[str, Any]:
         """
