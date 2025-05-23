@@ -12,7 +12,7 @@
 - [x] Align test expectations with implementation
 
 ## Backend Implementation
-- [ ] Implement WebSocket communication in bridge module
+- [x] Implement WebSocket communication in bridge module
 - [ ] Enhance tool visualization capabilities
 - [ ] Add session persistence
 - [ ] Implement LLM integration
@@ -29,6 +29,7 @@
 
 ## Testing
 - [x] Fix and validate all backend unit tests
+- [x] Add comprehensive WebSocket bridge tests
 - [ ] Implement frontend unit tests
 - [ ] Add integration tests
 - [ ] Set up end-to-end testing
