@@ -1,9 +1,9 @@
-"""
-Main Server Module for OpenManusEnhanced
-
-This module provides the Express.js server for the backend.
-It sets up the API routes, WebSocket server, and static file serving.
-"""
+/**
+ * Main Server Module for OpenManusEnhanced
+ *
+ * This module provides the Express.js server for the backend.
+ * It sets up the API routes, WebSocket server, and static file serving.
+ */
 
 const express = require('express');
 const http = require('http');
@@ -16,7 +16,7 @@ const { AgentManager, SessionManager, EventBus } = require('./services');
 
 // Create Express app
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // Create HTTP server
 const server = http.createServer(app);

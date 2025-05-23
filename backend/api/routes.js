@@ -1,16 +1,14 @@
-"""
-Backend API Module for OpenManusEnhanced
-
-This module provides the Express.js API endpoints for the backend server.
-It handles agent session management, tool execution, and event streaming.
-"""
+/**
+ * Backend API Module for OpenManusEnhanced
+ *
+ * This module provides the Express.js API endpoints for the backend server.
+ * It handles agent session management, tool execution, and event streaming.
+ */
 
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { AgentManager } = require('../services/agentManager');
-const { SessionManager } = require('../services/sessionManager');
-const { EventBus } = require('../services/eventBus');
+const { AgentManager, SessionManager, EventBus } = require('../services');
 
 // Initialize managers
 const agentManager = new AgentManager();

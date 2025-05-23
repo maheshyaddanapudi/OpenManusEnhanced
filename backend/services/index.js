@@ -1,9 +1,9 @@
-"""
-Backend Services Module for OpenManusEnhanced
-
-This module provides the core services for the backend server,
-including agent management, session management, and event bus.
-"""
+/**
+ * Backend Services Module for OpenManusEnhanced
+ *
+ * This module provides the core services for the backend server,
+ * including agent management, session management, and event bus.
+ */
 
 const { spawn } = require('child_process');
 const path = require('path');
@@ -595,11 +595,13 @@ class SessionManager {
   async createSession(session) {
     // Store session
     this.sessions.set(session.id, session);
+    
+    // Initialize messages
     this.messages.set(session.id, []);
-
+    
     // Save to disk
     await this.saveSessions();
-
+    
     return session;
   }
 
@@ -632,13 +634,13 @@ class SessionManager {
     if (!session) {
       throw new Error(`Session not found: ${sessionId}`);
     }
-
+    
     // Update session
     Object.assign(session, updates);
-
+    
     // Save to disk
     await this.saveSessions();
-
+    
     return session;
   }
 
@@ -648,13 +650,15 @@ class SessionManager {
    * @returns {Promise<void>}
    */
   async deleteSession(sessionId) {
-    // Remove session
+    // Delete session
     this.sessions.delete(sessionId);
+    
+    // Delete messages
     this.messages.delete(sessionId);
-
+    
     // Save to disk
     await this.saveSessions();
-
+    
     // Delete messages file
     try {
       const messagesFile = path.join(this.dataDir, 'messages', `${sessionId}.json`);
@@ -675,18 +679,17 @@ class SessionManager {
    */
   async addMessage(sessionId, message) {
     // Get messages
-    let messages = this.messages.get(sessionId);
+    const messages = this.messages.get(sessionId);
     if (!messages) {
-      messages = [];
-      this.messages.set(sessionId, messages);
+      throw new Error(`Session not found: ${sessionId}`);
     }
-
+    
     // Add message
     messages.push(message);
-
+    
     // Save to disk
     await this.saveMessages(sessionId);
-
+    
     return message;
   }
 
@@ -709,6 +712,7 @@ class EventBus {
   constructor() {
     this.subscribers = new Map();
     this.eventSubscribers = new Map();
+    this.nextSubscriptionId = 1;
   }
 
   /**
@@ -719,36 +723,19 @@ class EventBus {
    */
   subscribe(sessionId, callback) {
     // Generate subscription ID
-    const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
+    const subscriptionId = `sub_${this.nextSubscriptionId++}`;
+    
     // Get subscribers for session
-    let subscribers = this.subscribers.get(sessionId);
-    if (!subscribers) {
-      subscribers = new Map();
-      this.subscribers.set(sessionId, subscribers);
+    let sessionSubscribers = this.subscribers.get(sessionId);
+    if (!sessionSubscribers) {
+      sessionSubscribers = new Map();
+      this.subscribers.set(sessionId, sessionSubscribers);
     }
-
+    
     // Add subscriber
-    subscribers.set(subscriptionId, callback);
-
+    sessionSubscribers.set(subscriptionId, callback);
+    
     return subscriptionId;
-  }
-
-  /**
-   * Unsubscribe from all events for a session
-   * @param {string} sessionId - Session ID
-   * @param {string} subscriptionId - Subscription ID
-   * @returns {boolean} - Whether unsubscription was successful
-   */
-  unsubscribe(sessionId, subscriptionId) {
-    // Get subscribers for session
-    const subscribers = this.subscribers.get(sessionId);
-    if (!subscribers) {
-      return false;
-    }
-
-    // Remove subscriber
-    return subscribers.delete(subscriptionId);
   }
 
   /**
@@ -760,26 +747,41 @@ class EventBus {
    */
   subscribeToEvent(sessionId, eventType, callback) {
     // Generate subscription ID
-    const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Get event subscribers
-    let eventSubscribers = this.eventSubscribers.get(eventType);
+    const subscriptionId = `sub_${this.nextSubscriptionId++}`;
+    
+    // Get event key
+    const eventKey = `${sessionId}:${eventType}`;
+    
+    // Get subscribers for event
+    let eventSubscribers = this.eventSubscribers.get(eventKey);
     if (!eventSubscribers) {
       eventSubscribers = new Map();
-      this.eventSubscribers.set(eventType, eventSubscribers);
+      this.eventSubscribers.set(eventKey, eventSubscribers);
     }
-
-    // Get session subscribers
-    let sessionSubscribers = eventSubscribers.get(sessionId);
-    if (!sessionSubscribers) {
-      sessionSubscribers = new Map();
-      eventSubscribers.set(sessionId, sessionSubscribers);
-    }
-
+    
     // Add subscriber
-    sessionSubscribers.set(subscriptionId, callback);
-
+    eventSubscribers.set(subscriptionId, callback);
+    
     return subscriptionId;
+  }
+
+  /**
+   * Unsubscribe from all events for a session
+   * @param {string} sessionId - Session ID
+   * @param {string} subscriptionId - Subscription ID
+   */
+  unsubscribe(sessionId, subscriptionId) {
+    // Get subscribers for session
+    const sessionSubscribers = this.subscribers.get(sessionId);
+    if (sessionSubscribers) {
+      // Remove subscriber
+      sessionSubscribers.delete(subscriptionId);
+      
+      // Remove session if no subscribers
+      if (sessionSubscribers.size === 0) {
+        this.subscribers.delete(sessionId);
+      }
+    }
   }
 
   /**
@@ -787,30 +789,28 @@ class EventBus {
    * @param {string} sessionId - Session ID
    * @param {string} eventType - Event type
    * @param {Function} callback - Callback function
-   * @returns {boolean} - Whether unsubscription was successful
    */
   unsubscribeFromEvent(sessionId, eventType, callback) {
-    // Get event subscribers
-    const eventSubscribers = this.eventSubscribers.get(eventType);
-    if (!eventSubscribers) {
-      return false;
-    }
-
-    // Get session subscribers
-    const sessionSubscribers = eventSubscribers.get(sessionId);
-    if (!sessionSubscribers) {
-      return false;
-    }
-
-    // Find subscription ID for callback
-    for (const [subscriptionId, cb] of sessionSubscribers.entries()) {
-      if (cb === callback) {
-        // Remove subscriber
-        return sessionSubscribers.delete(subscriptionId);
+    // Get event key
+    const eventKey = `${sessionId}:${eventType}`;
+    
+    // Get subscribers for event
+    const eventSubscribers = this.eventSubscribers.get(eventKey);
+    if (eventSubscribers) {
+      // Find subscription ID for callback
+      for (const [subscriptionId, subscriberCallback] of eventSubscribers.entries()) {
+        if (subscriberCallback === callback) {
+          // Remove subscriber
+          eventSubscribers.delete(subscriptionId);
+          break;
+        }
+      }
+      
+      // Remove event if no subscribers
+      if (eventSubscribers.size === 0) {
+        this.eventSubscribers.delete(eventKey);
       }
     }
-
-    return false;
   }
 
   /**
@@ -820,32 +820,30 @@ class EventBus {
    */
   publish(sessionId, event) {
     // Get subscribers for session
-    const subscribers = this.subscribers.get(sessionId);
-    if (subscribers) {
+    const sessionSubscribers = this.subscribers.get(sessionId);
+    if (sessionSubscribers) {
       // Notify subscribers
-      for (const callback of subscribers.values()) {
+      for (const callback of sessionSubscribers.values()) {
         try {
           callback(event);
         } catch (error) {
-          console.error(`Error notifying subscriber for session ${sessionId}:`, error);
+          console.error('Error in event subscriber:', error);
         }
       }
     }
-
-    // Get event subscribers
-    const eventType = event.type;
-    const eventSubscribers = this.eventSubscribers.get(eventType);
+    
+    // Get event key
+    const eventKey = `${sessionId}:${event.type}`;
+    
+    // Get subscribers for event
+    const eventSubscribers = this.eventSubscribers.get(eventKey);
     if (eventSubscribers) {
-      // Get session subscribers
-      const sessionSubscribers = eventSubscribers.get(sessionId);
-      if (sessionSubscribers) {
-        // Notify subscribers
-        for (const callback of sessionSubscribers.values()) {
-          try {
-            callback(event);
-          } catch (error) {
-            console.error(`Error notifying event subscriber for session ${sessionId} and event ${eventType}:`, error);
-          }
+      // Notify subscribers
+      for (const callback of eventSubscribers.values()) {
+        try {
+          callback(event);
+        } catch (error) {
+          console.error('Error in event subscriber:', error);
         }
       }
     }
